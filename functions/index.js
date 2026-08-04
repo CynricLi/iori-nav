@@ -9,6 +9,10 @@ import { buildCardHydrationState } from './lib/card-model';
 import { ensureSchemaReady } from './lib/schema-migration';
 import { resolveWallpaperUrl } from './lib/wallpaper-defaults';
 
+// ===== Google AdSense（自动广告 Auto ads）=====
+// 只需在 <head> 加载 adsbygoogle.js 脚本，Google 会自动判断位置展示广告，无需手动广告单元
+const ADSENSE_CLIENT = 'ca-pub-3098819560072267';
+
 // 模板内容在 Worker 运行时实例生命周期内不变（部署会替换实例），缓存避免每次 MISS 重复 ASSETS.fetch
 let cachedTemplateHtml = null;
 async function getTemplateHtml(env, requestUrl) {
@@ -502,6 +506,11 @@ export async function onRequest(context) {
     if (mobileCardDescStyle) customCardCss += `@media (max-width: 767px) { .site-card p { ${mobileCardDescStyle} } }`;
   }
   if (customCardCss) headInjections += `<style>${customCardCss}</style>`;
+
+  // Google AdSense 脚本（<head> 内异步加载，不阻塞渲染）
+  headInjections += `
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}"
+     crossorigin="anonymous"></script>`;
 
   // 全局站点卡片视图模型与布局配置：直接序列化后注入到 main.js 之前
   const cardHydrationState = buildCardHydrationState(allSites, S);
