@@ -556,8 +556,12 @@ export async function onRequest(context) {
   }
 
   // 替换所有模板占位符（单次正则匹配 + 映射表）
-  const canonicalUrl = `${url.origin}/`;
-  const ogImageUrl = `${url.origin}/favicon.svg`;
+  // 自定义域优先：CNAME 接入时 url.origin 可能是 *.pages.dev，用 Host 头还原真实域名
+  const requestHost = (request.headers.get('host') || url.host || '').toLowerCase();
+  const isPagesPreview = requestHost.endsWith('.pages.dev');
+  const canonicalOrigin = isPagesPreview ? url.origin : `https://${requestHost || url.host}`;
+  const canonicalUrl = `${canonicalOrigin}/`;
+  const ogImageUrl = `${canonicalOrigin}/favicon.svg`;
   const replacements = {
     'HEADER_CONTENT': headerContent,
     'HEADER_CLASS': headerClass,
