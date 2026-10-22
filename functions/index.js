@@ -557,9 +557,11 @@ export async function onRequest(context) {
 
   // 替换所有模板占位符（单次正则匹配 + 映射表）
   // 自定义域优先：CNAME 接入时 url.origin 可能是 *.pages.dev，用 Host 头还原真实域名
+  // CF Pages 内部把 Host 改写成 *.pages.dev，这里用生产域名兜底（预览环境同样指向生产，避免被索引）
+  const PROD_CANONICAL_HOST = (env.CANONICAL_HOST || 'nav.iforworlds.com').toLowerCase();
   const requestHost = (request.headers.get('host') || url.host || '').toLowerCase();
-  const isPagesPreview = requestHost.endsWith('.pages.dev');
-  const canonicalOrigin = isPagesPreview ? url.origin : `https://${requestHost || url.host}`;
+  const canonicalHost = (!requestHost || requestHost.endsWith('.pages.dev')) ? PROD_CANONICAL_HOST : requestHost;
+  const canonicalOrigin = `https://${canonicalHost}`;
   const canonicalUrl = `${canonicalOrigin}/`;
   const ogImageUrl = `${canonicalOrigin}/favicon.svg`;
   const replacements = {
